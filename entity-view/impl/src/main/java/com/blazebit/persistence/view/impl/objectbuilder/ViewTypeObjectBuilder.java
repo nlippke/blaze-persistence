@@ -48,6 +48,8 @@ public class ViewTypeObjectBuilder<T> implements ObjectBuilder<T> {
     private final NavigableSet<String> fetches;
     private final SecondaryMapper[] secondaryMappers;
 
+    private int[] nullMappings;
+
     public ViewTypeObjectBuilder(ViewTypeObjectBuilderTemplate<T> template, ParameterHolder<?> parameterHolder, Map<String, Object> optionalParameters, ViewJpqlMacro viewJpqlMacro, EmbeddingViewJpqlMacro embeddingViewJpqlMacro, NavigableSet<String> fetches, boolean nullIfEmpty) {
         this.hasId = template.hasId();
         this.objectInstantiator = template.getObjectInstantiator();
@@ -59,6 +61,7 @@ public class ViewTypeObjectBuilder<T> implements ObjectBuilder<T> {
         this.fetches = fetches;
         this.nullIfEmpty = nullIfEmpty;
         this.secondaryMappers = template.getSecondaryMappers();
+        nullMappings = new int[mappers.length];
     }
 
     @Override
@@ -96,6 +99,7 @@ public class ViewTypeObjectBuilder<T> implements ObjectBuilder<T> {
             }
             for (int i = 0; i < mappers.length; i++) {
                 mappers[i].applyMapping(queryBuilder, parameterHolder, optionalParameters, viewJpqlMacro, embeddingViewJpqlMacro, false);
+                nullMappings[i] = 0;
             }
         } else {
             if (secondaryMappers.length != 0) {
@@ -111,8 +115,9 @@ public class ViewTypeObjectBuilder<T> implements ObjectBuilder<T> {
                 String attributePath = mapper.getAttributePath();
                 if (attributePath != null && hasSubFetches(attributePath)) {
                     mapper.applyMapping(queryBuilder, parameterHolder, optionalParameters, viewJpqlMacro, embeddingViewJpqlMacro, false);
+                    nullMappings[i] = 0;
                 } else {
-                    queryBuilder.select("NULL");
+                    nullMappings[i] = 1;
                 }
             }
         }
@@ -121,5 +126,16 @@ public class ViewTypeObjectBuilder<T> implements ObjectBuilder<T> {
     private boolean hasSubFetches(String attributePath) {
         String fetchedPath = fetches.ceiling(attributePath);
         return fetchedPath != null && (fetchedPath.length() == attributePath.length() || fetchedPath.startsWith(attributePath) && fetchedPath.length() > attributePath.length() && fetchedPath.charAt(attributePath.length()) == '.');
+    }
+
+    public Object[] inflate(Object[] source) {
+        Object[] target = new Object[mappers.length];
+        int lastNonNull = 0;
+        for (int i = 0; i < target.length; i++) {
+            if (nullMappings[i] == 0) {
+                target[i] = source[lastNonNull++];
+            }
+        }
+        return target;
     }
 }

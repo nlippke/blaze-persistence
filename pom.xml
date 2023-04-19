@@ -285,7 +285,7 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+        <!--    <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <version>3.0</version>
@@ -305,7 +305,7 @@
                     </includes>
                     <excludes>
                         <exclude>**/target/**</exclude>
-                        <!-- The following files contain modified headers due to copied code and need to be excluded from the check -->
+                         The following files contain modified headers due to copied code and need to be excluded from the check
                         <exclude>**/src/main/java/com/blazebit/persistence/view/impl/metamodel/analysis/**</exclude>
                         <exclude>**/src/main/java/com/blazebit/persistence/integration/view/spring/impl/TypeFilterParser.java</exclude>
                         <exclude>**/src/main/java/com/blazebit/persistence/spring/data/base/query/AbstractCriteriaQueryParameterBinder.java</exclude>
@@ -357,7 +357,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>

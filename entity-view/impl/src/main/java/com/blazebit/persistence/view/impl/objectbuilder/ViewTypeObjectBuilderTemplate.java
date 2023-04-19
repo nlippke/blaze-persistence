@@ -1421,9 +1421,10 @@ public class ViewTypeObjectBuilderTemplate<T> {
 
     public ObjectBuilder<T> createObjectBuilder(ParameterHolder<?> parameterHolder, Map<String, Object> optionalParameters, EntityViewConfiguration entityViewConfiguration, int suffix, boolean isSubview, boolean nullFlatViewIfEmpty) {
         boolean hasOffset = tupleOffset != 0 || suffix != 0;
-        ObjectBuilder<T> result;
 
-        result = new ViewTypeObjectBuilder<T>(this, parameterHolder, optionalParameters, entityViewConfiguration == null ? null : entityViewConfiguration.getViewJpqlMacro(), entityViewConfiguration == null ? null : entityViewConfiguration.getEmbeddingViewJpqlMacro(), entityViewConfiguration == null ? null : entityViewConfiguration.getFetches(), nullFlatViewIfEmpty);
+        ViewTypeObjectBuilder<T> origin = new ViewTypeObjectBuilder<T>(this, parameterHolder, optionalParameters, entityViewConfiguration == null ? null : entityViewConfiguration.getViewJpqlMacro(), entityViewConfiguration == null ? null : entityViewConfiguration.getEmbeddingViewJpqlMacro(), entityViewConfiguration == null ? null : entityViewConfiguration.getFetches(), nullFlatViewIfEmpty);
+
+        ObjectBuilder<T> result = origin;
 
         if (hasSubtypes) {
             result = new InheritanceReducerViewTypeObjectBuilder<>((ViewTypeObjectBuilder<T>) result, tupleOffset, suffix, mappers.length, !isSubview && (tupleOffset > 0 || suffix > 0), subtypeInstantiators);
@@ -1441,6 +1442,10 @@ public class ViewTypeObjectBuilderTemplate<T> {
             } else {
                 result = new ChainingObjectBuilder<T>(tupleTransformatorFactory, result, parameterHolder, optionalParameters, entityViewConfiguration);
             }
+        }
+
+        if (!hasOffset && entityViewConfiguration != null && entityViewConfiguration.getFetches() != null && entityViewConfiguration.getFetches().size() > 0) {
+            result =  new InflatingDelegatingObjectBuilder<>(result, origin);
         }
 
         return result;
